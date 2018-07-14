@@ -1,0 +1,14 @@
+Мария Панфилова
+Прикрепленные файлы18:03 (4 мин. назад)
+кому: мне 
+fid = fopen('comfile17.txt');
+sh=26; % 3-7,10-12_15
+% sh=57; % 8,9_15
+qq=0;
+
+while ~feof(fid)
+L = fgets(fid)
+god = strcat(L(sh),L(1+sh));
+month = strcat(L(2+sh),L(3+sh));
+day = strcat(L(4+sh),L(5+sh));
+orbit = strcat('S',L(sh+6:sh+9),'00')

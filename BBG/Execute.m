@@ -1,7 +1,7 @@
 clear all
 
 bnum{1} = 'NS';
-com='comfile17.txt';
+com='comfile16.txt';
 nb=1;
 for ib=1:nb
     mkdir(bnum{ib});
@@ -29,31 +29,32 @@ end
  LoRight(1) = 168;
  Lo0(1) = 0.5*(LoLeft(1)+LoRight(1));
 
-fid = fopen(com);
-sh=26; % 3-7,10-12_15
+fid = fopen(com,'rt');
+sh=38; % 3-7,10-12_15
 % sh=57; % 8,9_15
 qq=0;
 
 while ~feof(fid)
     L = fgets(fid);
-    year = strcat(L(sh),L(1+sh));
-    month = strcat(L(2+sh),L(3+sh));
-    day = strcat(L(4+sh),L(5+sh));
-    orbit = strcat('S',L(sh+6:sh+9),'00');
+    year = L(sh:sh+3);
+    month = L(sh+5:sh+6);
+    day = L(sh+8:sh+9);
+    orbit=L(80:86);
+    %orbit = strcat('S',L(sh+6:sh+9),'00');
     
     fn = sscanf(L,'%s');   
     fileinfo = hdf5info(fn);
     % Groups(1) - HS, Ka-band; Groups(3) - NS, Ku-band
-     LaKu = hdf5read(fileinfo.GroupHierarchy.Groups(3).Datasets(1));
-     LoKu = hdf5read(fileinfo.GroupHierarchy.Groups(3).Datasets(2));
+     LaKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Datasets(1));
+     LoKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Datasets(2));
      
      %sigmaKu =
      %hdf5read(fileinfo.GroupHierarchy.Groups(3).Groups(10).Datasets(5))-
      %MS, Ka-band
-     sigmaKu = hdf5read(fileinfo.GroupHierarchy.Groups(3).Groups(9).Datasets(5));
-     secofdayKu = hdf5read(fileinfo.GroupHierarchy.Groups(3).Groups(8).Datasets(8));
-     preciprateKu = hdf5read(fileinfo.GroupHierarchy.Groups(3).Groups(6).Datasets(10));
-     IncAngleKu = hdf5read(fileinfo.GroupHierarchy.Groups(3).Groups(5).Datasets(11));
+     sigmaKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Groups(9).Datasets(5));
+     secofdayKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Groups(8).Datasets(8));
+     preciprateKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Groups(6).Datasets(10));
+     IncAngleKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Groups(5).Datasets(11));
      sizeKu = size(LaKu);
      Lsw = sizeKu(1)*5;
      

@@ -1,4 +1,4 @@
-    function [boo1,d21,j11]= apprpt(LaKu,LoKu,La0,Lo0,jmin,jmax,npolosy,nb);
+    function [boo1,d21,j11]= apprpt(LaKu,LoKu,La0,Lo0,jmin,jmax,npolosy,nb)
     
     j1 = jmin;   
     for ib=1:nb

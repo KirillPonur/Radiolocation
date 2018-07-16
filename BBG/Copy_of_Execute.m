@@ -64,7 +64,7 @@ while ~feof(fid)
      sigmaKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Groups(9).Datasets(5));
      secofdayKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Groups(8).Datasets(8));
      preciprateKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Groups(6).Datasets(10));
-     IncAngleKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Groups(5).Datasets(11));
+     IncAngleKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Groups(5).Datasets(10));%!!!!!!!!!!!!
      sizeKu = size(LaKu);
      Lsw = sizeKu(1)*5;
      

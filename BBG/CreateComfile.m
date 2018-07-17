@@ -1,10 +1,10 @@
 clear all
-fid = fopen('Tracks_16.txt','rt');      %file with needed track names
-com = fopen('comfile16.txt','wt');      %file with directories of the needed files on the disk
+fid = fopen('moreTracks_16.txt','rt');      %file with needed track names
+com = fopen('comfile16_all.txt','wt');      %file with directories of the needed files on the disk
 
 while ~feof(fid)
     FileName = fgets(fid);
-    UsefulData=FileName(24:54);
+    UsefulData=FileName(42:65);
     YearMonth=strcat(UsefulData(1:4),'_',UsefulData(5:6));
     YearMonthDay=strcat(UsefulData(1:4),'_',UsefulData(5:6),'_',UsefulData(7:8));
     path='G:/Maria_Panfilova_hdf5_nasa/';

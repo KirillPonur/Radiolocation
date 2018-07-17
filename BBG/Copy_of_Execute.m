@@ -1,6 +1,7 @@
 clear all
 
-bnum{1} = 'okhotskTest2';
+bnum{1} = 'okhotsk';
+swathFolder{1}='NS1';
 com='comfile16.txt';
 nb=1;
 %for ib=1:nb
@@ -67,22 +68,18 @@ while ~feof(fid)
      IncAngleKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Groups(5).Datasets(10));%!!!!!!!!!!!!
      sizeKu = size(LaKu);
      Lsw = sizeKu(1)*5;
-     
-     
-    
+              
      Sortin( LaKu,LoKu,LaTop,LaBottom,LoRight,LoLeft,bnum,day,month,year,orbit,IncAngleKu,sigmaKu,preciprateKu,secofdayKu)
-     
-     
-     
-%     npolosy = 1;
-%     jmin = 1860;
-%     jmax = 4300;
-%     [boo1,d21,j11]= apprpt(LaKu,LoKu,La0,Lo0,jmin,jmax,npolosy,nb);
-%     npolosy = sizeKu(1);
-%     [boo2,d22,j22]= apprpt(LaKu,LoKu,La0,Lo0,jmin,jmax,npolosy,nb);    
-% %    k1=cutfr_rect_swath(LaKu,LoKu,LaBottom,LoLeft,LaTop,LoRight,boo1,boo2,d21,d22,j11,j22,bnum,day,month,year,orbit,Lsw,nb,sizeKu,IncAngleKu,sigmaKu,preciprateKu,secofdayKu);
-%     k1=cutfr_rect(LaKu,LoKu,LaBottom,LoLeft,LaTop,LoRight,boo1,boo2,d21,d22,j11,j22,bnum,day,month,year,orbit,Lsw,nb,sizeKu,IncAngleKu,sigmaKu,preciprateKu,secofdayKu);
-%     
+           
+     npolosy = 1;
+     jmin = 2;
+     jmax = sizeKu(2);
+    [boo1,d21,j11]= apprpt(LaKu,LoKu,La0,Lo0,jmin,jmax,npolosy,nb);
+    npolosy = sizeKu(1);
+    [boo2,d22,j22]= apprpt(LaKu,LoKu,La0,Lo0,jmin,jmax,npolosy,nb);    
+    k1=cutfr_rect_swath(LaKu,LoKu,LaBottom,LoLeft,LaTop,LoRight,boo1,boo2,d21,d22,j11,j22,swathFolder,day,month,year,orbit,Lsw,nb,sizeKu,IncAngleKu,sigmaKu,preciprateKu,secofdayKu);
+  %  k1=cutfr_rect(LaKu,LoKu,LaBottom,LoLeft,LaTop,LoRight,boo1,boo2,d21,d22,j11,j22,bnum,day,month,year,orbit,Lsw,nb,sizeKu,IncAngleKu,sigmaKu,preciprateKu,secofdayKu);
+    
 %     if k1==1  
 %         npolosy = 1;
 %         jmin = 4630;
@@ -92,4 +89,8 @@ while ~feof(fid)
 %         [boo2,d22,j22]= apprpt(LaKu,LoKu,La0,Lo0,jmin,jmax,npolosy,nb);
 %         k1=cutfr_rect(LaKu,LoKu,LaBottom,LoLeft,LaTop,LoRight,boo1,boo2,d21,d22,j11,j22,bnum,day,month,year,orbit,Lsw,nb,sizeKu,IncAngleKu,sigmaKu,preciprateKu,secofdayKu);            
 %     end
- end 
+end
+load handel.mat;
+sound(y, Fs);
+disp('Done!')
+ 

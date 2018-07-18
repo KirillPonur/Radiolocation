@@ -1,5 +1,5 @@
 clear all
-dirn1='Hydro\MS\m06y2016\d14m06y2016S030702\'; % path to area* files
+dirn1='Hydro\NS\m06y2016\d20m06y2016S023634\'; % path to area* files
 MainFile=load(strcat(dirn1,ls(strcat(dirn1,'area*')))); %load areaKu file in
 sigma0=MainFile(:,4);                       %get sigma0
 La=MainFile(:,1);                           %get lattitude
@@ -27,10 +27,6 @@ LaNew=zeros(SizeSigma,1);
 LoNew=zeros(SizeSigma,1);
 
 for j=1:2:SizeSigma
-    
-%     if (floor(j/100)*100-j)==0
-%         disp(strcat('Pixels drawn: ',num2str(j)));
-%     end
     t=t+1;
     c = wcol(minz,maxz,sigma0(j));
     cmap(t,1)=c(1);
@@ -44,7 +40,7 @@ cmap=cmap(1:t,:);
 LoNew=LoNew(1:t);
 LaNew=LaNew(1:t);
 
-scatterm(LaNew,LoNew,5,'red','filled')
+scatterm(LaNew,LoNew,5,cmap,'filled')
 geoshow('landareas.shp', 'FaceColor',  [0.5 0.5 0.5]); %show the map
 
 colorbar('YTickLabel',...

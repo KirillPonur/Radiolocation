@@ -1,10 +1,10 @@
 clear all
-fid=fopen('rawTracks16.txt','rt');
+fid=fopen('allTracks16.txt','rt');
 fileName=fgets(fid);
 fileName=fgets(fid);
 fileName=fgets(fid);
 fileName=fgets(fid);
-com=fopen('moreTracks_16.txt','wt');
+com=fopen('allTracks_16.txt','wt');
 while ~feof(fid)
     fileName=fgets(fid);
     fprintf(com,'%s',fileName(107:end));

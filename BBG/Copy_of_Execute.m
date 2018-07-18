@@ -1,13 +1,10 @@
 clear all
-
-bnum{1} = 'okhotsk';
-swathFolder{1}='NS1';
-com='comfile16.txt';
+swathFolder={'Hydro/NS','Hydro/MS','Hydro/HS'};
+com='comfile16_h.txt';
 nb=1;
-%for ib=1:nb
-%    mkdir(bnum{ib});
-%end
-mkdir(bnum{1});
+for i=1:length(swathFolder)
+    mkdir(swathFolder{i});
+end
 
 
     % LaTop---- -----------
@@ -32,15 +29,22 @@ mkdir(bnum{1});
  LoRight(1) = 168;
  Lo0(1) = 0.5*(LoLeft(1)+LoRight(1));
 
-fid = fopen(com,'rt');
-sh=38; % 3-7,10-12_15
-% sh=57; % 8,9_15
-qq=0;
-day='01';
-%Counter of days done
-numberOfDays=0;
-fdone=0;
-
+ fid = fopen(com,'rt');
+ sh=38; 
+ day='01';
+ %Counter of days done
+ numberOfDays=0;
+ fdone=0;
+ k=1;
+    hydroPic=ls('Hydrometer_Okhotsk/2016-2018/2016');
+    Amount=size(hydroPic);
+        for i=4:Amount(1)
+            wantedMonthDay{k}=hydroPic(i,3:6); %dates of pictures we have for this year
+            k=k+1;
+        end
+        
+ i=0;k=0;
+    
 while ~feof(fid)
     L = fgets(fid);
     year = L(sh:sh+3);
@@ -48,49 +52,53 @@ while ~feof(fid)
     p_day=day;
     day = L(sh+8:sh+9);
     orbit=L(80:86);
+    whatK=L(sh+18:sh+19);
     %orbit = strcat('S',L(sh+6:sh+9),'00');
-    
+    NeededDate = any(strcmp(wantedMonthDay,strcat(month,day)));
     %Counter of days done
         if ~strcmp(p_day,day)
             numberOfDays=numberOfDays+1;
            displayText=strcat('Days done: ',num2str(numberOfDays));
            disp(displayText) 
         end
-        
-    fn = sscanf(L,'%s');   
-    fileinfo = hdf5info(fn);
-    % Groups(1) - HS, Ka-band; Groups(3) - NS, Ku-band
-     LaKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Datasets(1));
-     LoKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Datasets(2));
-     sigmaKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Groups(9).Datasets(5));
-     secofdayKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Groups(8).Datasets(8));
-     preciprateKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Groups(6).Datasets(10));
-     IncAngleKu = hdf5read(fileinfo.GroupHierarchy.Groups(1).Groups(5).Datasets(10));%!!!!!!!!!!!!
-     sizeKu = size(LaKu);
-     Lsw = sizeKu(1)*5;
-              
-     Sortin( LaKu,LoKu,LaTop,LaBottom,LoRight,LoLeft,bnum,day,month,year,orbit,IncAngleKu,sigmaKu,preciprateKu,secofdayKu)
+        if NeededDate  %only sort if matches date
+            fn = sscanf(L,'%s');
+            fileinfo = hdf5info(fn);
+            % Groups(1) - HS, Ka-band; Groups(3) - NS, Ku-band
            
-     npolosy = 1;
-     jmin = 2;
-     jmax = sizeKu(2);
-    [boo1,d21,j11]= apprpt(LaKu,LoKu,La0,Lo0,jmin,jmax,npolosy,nb);
-    npolosy = sizeKu(1);
-    [boo2,d22,j22]= apprpt(LaKu,LoKu,La0,Lo0,jmin,jmax,npolosy,nb);    
-    k1=cutfr_rect_swath(LaKu,LoKu,LaBottom,LoLeft,LaTop,LoRight,boo1,boo2,d21,d22,j11,j22,swathFolder,day,month,year,orbit,Lsw,nb,sizeKu,IncAngleKu,sigmaKu,preciprateKu,secofdayKu);
-  %  k1=cutfr_rect(LaKu,LoKu,LaBottom,LoLeft,LaTop,LoRight,boo1,boo2,d21,d22,j11,j22,bnum,day,month,year,orbit,Lsw,nb,sizeKu,IncAngleKu,sigmaKu,preciprateKu,secofdayKu);
-    
-%     if k1==1  
-%         npolosy = 1;
-%         jmin = 4630;
-%         jmax = 5050;
-%         [boo1,d21,j11]= apprpt(LaKu,LoKu,La0,Lo0,jmin,jmax,npolosy,nb);
-%         npolosy = sizeKu(1);
-%         [boo2,d22,j22]= apprpt(LaKu,LoKu,La0,Lo0,jmin,jmax,npolosy,nb);
-%         k1=cutfr_rect(LaKu,LoKu,LaBottom,LoLeft,LaTop,LoRight,boo1,boo2,d21,d22,j11,j22,bnum,day,month,year,orbit,Lsw,nb,sizeKu,IncAngleKu,sigmaKu,preciprateKu,secofdayKu);            
-%     end
+            if strcmp(whatK,'Ku')
+                n=1;
+                folderPath=swathFolder{1};
+                kmPerSquare=5;
+            elseif strcmp(whatK,'Ka')
+                n=2; %1 for HS and 2 for MS
+                folderPath=swathFolder{2};
+                kmPerSquare=5;
+            end
+            
+            LaKu = hdf5read(fileinfo.GroupHierarchy.Groups(n).Datasets(1));
+            LoKu = hdf5read(fileinfo.GroupHierarchy.Groups(n).Datasets(2));
+            sigmaKu = hdf5read(fileinfo.GroupHierarchy.Groups(n).Groups(9).Datasets(5));
+            secofdayKu = hdf5read(fileinfo.GroupHierarchy.Groups(n).Groups(8).Datasets(8));
+            preciprateKu = hdf5read(fileinfo.GroupHierarchy.Groups(n).Groups(6).Datasets(10));
+            IncAngleKu = hdf5read(fileinfo.GroupHierarchy.Groups(n).Groups(5).Datasets(10));
+            sizeKu = size(LaKu);
+            Lsw = sizeKu(1)*kmPerSquare;
+            
+            [folderStatus,folderMessage] = mkdir(strcat(folderPath,'\m',month,'y',year));
+            filePath=strcat(folderPath,'\m',month,'y',year,'\d',day,'m',month,'y',year,orbit);
+            
+            disp('Counting distances')
+            npolosy = 1;
+            [d21,j11]= smallestDistance(LaKu,LoKu,La0,Lo0,sizeKu,npolosy);
+            npolosy = sizeKu(1);
+            [d22,j22]= smallestDistance(LaKu,LoKu,La0,Lo0,sizeKu,npolosy);
+            disp('Finished counting distances')
+            k1=sortAll(LaKu,LoKu,LaBottom,LoLeft,LaTop,LoRight,d21,d22,j11,j22,filePath,whatK,Lsw,kmPerSquare,sizeKu,IncAngleKu,sigmaKu,preciprateKu,secofdayKu);
+        
+        end
 end
 load handel.mat;
-sound(y, Fs);
+sound(y,Fs);
 disp('Done!')
  

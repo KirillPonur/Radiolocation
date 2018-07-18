@@ -54,12 +54,12 @@ function Inspector_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for Inspector
 handles.output = hObject;
-handles.file='d08m01g2016S080921';
-handles.sig = load(strcat('NS1\',handles.file,'_swath\SigKu.txt'));
-handles.theta=load(strcat('NS1\',handles.file,'_swath\IncKu.txt'));
+handles.file='Hydro\NS\m06y2016\d20m06y2016S023634';
+handles.sig = load(strcat(handles.file,'\SigKu.txt'));
+handles.theta=load(strcat(handles.file,'\IncKu.txt'));
 
 imagesc(handles.KuTrack,handles.sig);
-plotMap(handles,handles.file);
+%plotMap(handles,handles.file);
 % Update handles structure
 guidata(hObject, handles);
 
@@ -102,8 +102,7 @@ end
 
 %%%%%%%%%%%  Mfuncs  %%%%%%%%%%%%%%
     function []=plotMap(handles,file)
-     dirn1='okhotskTest\'; % path to area* files
-        MainFile=load(strcat(dirn1,file,'\areaKu.txt')); %load areaKu file in
+        MainFile=load(strcat(file,'\areaKu.txt')); %load areaKu file in
         sigma0=MainFile(:,4);                       %get sigma0
         La=MainFile(:,1);                           %get lattitude
         Lo=MainFile(:,2);                           %get Longitude

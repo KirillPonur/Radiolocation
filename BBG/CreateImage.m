@@ -28,19 +28,14 @@ LoNew=zeros(SizeSigma,1);
 
 for j=1:2:SizeSigma
     t=t+1;
-    c = wcol(minz,maxz,sigma0(j));
-    cmap(t,1)=c(1);
-    cmap(t,2)=c(2);
-    cmap(t,3)=c(3);
+    cmap(t,:)=wcol(minz,maxz,sigma0(j));
     LaNew(t)=La(j);
     LoNew(t)=Lo(j);
-    
 end
 cmap=cmap(1:t,:);
 LoNew=LoNew(1:t);
 LaNew=LaNew(1:t);
-
-scatterm(LaNew,LoNew,5,cmap,'filled')
+scatterm(LaNew,LoNew,5,cmap)
 geoshow('landareas.shp', 'FaceColor',  [0.5 0.5 0.5]); %show the map
 
 colorbar('YTickLabel',...

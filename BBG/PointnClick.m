@@ -1,9 +1,9 @@
 clear all
 %left click to select point
 %Right click stops point selection! restart the program to start over
-file='NS1\d01m02g2016S193736_swath';
-A = load(strcat(file,'\SigKu.txt'));
-th=load(strcat(file,'\IncKu.txt'));
+file='Hydro\NS\m06y2016\d20m06y2016S023634\';
+A = load(strcat(file,ls(strcat(file,'Sig*'))));
+th=load(strcat(file,ls(strcat(file,'Inc*'))));
 figure('Color','w','Name','Swath inspect')
 subplot(3,1,1)
 imagesc(A)

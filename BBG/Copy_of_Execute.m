@@ -1,6 +1,6 @@
 clear all
 swathFolder={'Hydro/NS','Hydro/MS','Hydro/HS'};
-com='comfile16_h.txt';
+com='comfile16_h1.txt';
 nb=1;
 for i=1:length(swathFolder)
     mkdir(swathFolder{i});

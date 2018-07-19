@@ -172,10 +172,8 @@ varargout{1} = handles.output;
              end
              
          function drawRectangle(position,handles)
-%           position=getPosition(handles.rectangle);
           position=[floor(position(1)),floor(position(2)),floor(position(3)),floor(position(4))];
           % [xmin ymin width height]
-          
           tSize=size(handles.thetaNS);
           sigNSV=zeros(tSize(1),1);
           sigNSH=zeros(tSize(2),1);
@@ -197,21 +195,36 @@ varargout{1} = handles.output;
               end
               sigNSH(i)=sigNSH(i)/position(4);
           end
+          [paramNew]=lsqcurvefit(@HypApp,[5 0 0],thNS(position(2):position(2)+position(4)),sigNSV(position(2):position(2)+position(4)));
+          err=100/(max(sigNSV(position(2):position(2)+position(4)))-min(sigNSV(position(2):position(2)+position(4))))*mean((HypApp(paramNew,thNS(position(2):position(2)+position(4)))-sigNSV(position(2):position(2)+position(4))).^2);
           plot(handles.KuHC,position(1):position(1)+position(3),sigNSH(position(1):position(1)+position(3)))
           plot(handles.KuVC,thNS(position(2):position(2)+position(4)),sigNSV(position(2):position(2)+position(4)))
-          %hold(handles.KuVC);
+          hold(handles.KuVC);
+          plot(handles.KuVC,thNS(position(2):position(2)+position(4)),HypApp(paramNew,thNS(position(2):position(2)+position(4))))
+          hold(handles.KuVC,'off');
 %     scatter(handles.KuVC,th0(floor(y)),handles.sigNS(floor(y),floor(x)),'g','filled')
 %     hold(handles.KuVC,'off');
 %     plot(handles.KuHC,handles.sigNS(floor(y),:))
 %     hold(handles.KuHC);
 %     scatter(handles.KuHC,x,handles.sigNS(floor(y),floor(x)),'g','filled')
 %     hold(handles.KuHC,'off');
-    handles.KuVC.Title.String='Horizontal-Summmed';
+    if paramNew(1)<2000 && paramNew(1)>15 && paramNew(3)<100 && err<10
+        handles.iceText.String='Is Ice';
+    else
+        handles.iceText.String='Not Ice';
+    end
+    handles.KuVC.Title.String=strcat('Horizontal-Summmed. AvSquare:',num2str(err),'%',' a=',num2str(paramNew(1)),' c=',num2str(paramNew(2)));
     handles.KuHC.Title.String='Vertical-Summed';
     handles.KuVC.YLabel.String='RCS-Db';
     handles.KuHC.YLabel.String='RCS-Db';
 % end
-
+               
+          function F=HypApp(param,xdata)
+%              a=param(1);
+%              c=param(2);
+%              d=param(3);
+               F=param(1)*abs(1./(abs(xdata)+param(2)))+param(3);                
+             
         
 
 % --- Executes on button press in pointCutBtn.
@@ -298,7 +311,7 @@ imagesc(handles.KaTrack,handles.sigMS);
 axes(handles.KaTrack)
 colorbar
 plotMap(handles,handles.pathNS);
-
+% set(handles.Map,'toolbar','figure');
 guidata(hObject, handles);
 
 

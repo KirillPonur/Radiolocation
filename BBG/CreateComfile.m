@@ -1,6 +1,6 @@
 clear all
 fid = fopen('allTracks_16.txt','rt');      %file with needed track names
-com = fopen('comfile16_h.txt','wt');      %file with directories of the needed files on the disk
+com = fopen('comfile16_h1.txt','wt');      %file with directories of the needed files on the disk
 
 while ~feof(fid)
     FileName = fgets(fid);

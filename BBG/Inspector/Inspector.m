@@ -22,7 +22,7 @@ function varargout = Inspector(varargin)
 
 % Edit the above text to modify the response to help Inspector
 
-% Last Modified by GUIDE v2.5 19-Jul-2018 02:57:26
+% Last Modified by GUIDE v2.5 21-Jul-2018 23:16:00
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -171,6 +171,8 @@ varargout{1} = handles.output;
                  handles.sigMS(i,:)=tempS(sz(1)-i+1,:);
              end
              
+
+             
          function drawRectangle(position,handles)
           position=[floor(position(1)),floor(position(2)),floor(position(3)),floor(position(4))];
           % [xmin ymin width height]
@@ -233,7 +235,8 @@ function pointCutBtn_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 mouse=1;
-tSize=size(handles.thetaNS);
+tSizeNS=size(handles.thetaNS);
+tSizeMS=size(handles.thetaMS);
 handles.KuHC.Title.FontWeight='bold';
 handles.KuHC.YLabel.FontName='Helvetica';
 handles.KuVC.Title.FontWeight='bold';
@@ -241,24 +244,47 @@ handles.KuVC.YLabel.FontName='Helvetica';
 axes(handles.KuTrack)
  while mouse<3 %while RButton (mouse=3) is not pressed
     [x,y,mouse]=ginput(1);
-    cla(handles.KuHC)
-    cla(handles.KuVC)
-    th0=handles.thetaNS(:,floor(x));
-    for i=1:floor(tSize(1)/2)
-        th0(i)=-handles.thetaNS(i);
+    ax=gca;
+    if strcmp(ax.Tag,'KuTrack')
+        cla(handles.KuHC)
+        cla(handles.KuVC)
+        thN=handles.thetaNS(:,floor(x));
+        for i=1:floor(tSizeNS(1)/2)
+            thN(i)=-handles.thetaNS(i);
+        end
+        plot(handles.KuVC,thN,handles.sigNS(:,floor(x)));
+        hold(handles.KuVC);
+        scatter(handles.KuVC,thN(floor(y)),handles.sigNS(floor(y),floor(x)),'g','filled')
+        hold(handles.KuVC,'off');
+        plot(handles.KuHC,handles.sigNS(floor(y),:))
+        hold(handles.KuHC);
+        scatter(handles.KuHC,x,handles.sigNS(floor(y),floor(x)),'g','filled')
+        hold(handles.KuHC,'off');
+        handles.KuVC.Title.String='Vertical-Cut';
+        handles.KuHC.Title.String='Horizontal-Cut';
+        handles.KuVC.YLabel.String='RCS-Db';
+        handles.KuHC.YLabel.String='RCS-Db';
     end
-    plot(handles.KuVC,th0,handles.sigNS(:,floor(x)));
-    hold(handles.KuVC);
-    scatter(handles.KuVC,th0(floor(y)),handles.sigNS(floor(y),floor(x)),'g','filled')
-    hold(handles.KuVC,'off');
-    plot(handles.KuHC,handles.sigNS(floor(y),:))
-    hold(handles.KuHC);
-    scatter(handles.KuHC,x,handles.sigNS(floor(y),floor(x)),'g','filled')
-    hold(handles.KuHC,'off');
-    handles.KuVC.Title.String='Vertical-Cut';
-    handles.KuHC.Title.String='Horizontal-Cut';
-    handles.KuVC.YLabel.String='RCS-Db';
-    handles.KuHC.YLabel.String='RCS-Db';
+        if strcmp(ax.Tag,'KaTrack')
+        cla(handles.KaHC)
+        cla(handles.KaVC)
+        thM=handles.thetaMS(:,floor(x));
+        for i=1:floor(tSizeMS(1)/2)
+            thM(i)=-handles.thetaMS(i);
+        end
+        plot(handles.KaVC,thM,handles.sigMS(:,floor(x)));
+        hold(handles.KaVC);
+        scatter(handles.KaVC,thM(floor(y)),handles.sigMS(floor(y),floor(x)),'g','filled')
+        hold(handles.KaVC,'off');
+        plot(handles.KaHC,handles.sigMS(floor(y),:))
+        hold(handles.KaHC);
+        scatter(handles.KaHC,x,handles.sigMS(floor(y),floor(x)),'g','filled')
+        hold(handles.KaHC,'off');
+        handles.KaVC.Title.String='Vertical-Cut';
+        handles.KaHC.Title.String='Horizontal-Cut';
+        handles.KaVC.YLabel.String='RCS-Db';
+        handles.KaHC.YLabel.String='RCS-Db';
+        end
 end
 
 
@@ -267,7 +293,7 @@ function rectCutBtn_Callback(hObject, eventdata, handles)
 % hObject    handle to rectCutBtn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% mouse=1;
+
     cla(handles.KuHC)
     cla(handles.KuVC)
     axes(handles.KuTrack)
@@ -303,13 +329,19 @@ handles.sigNS = load(strcat(handles.pathNS,'\',ls(strcat(handles.pathNS,'\Sig*')
 handles.thetaNS = load(strcat(handles.pathNS,'\',ls(strcat(handles.pathNS,'\Inc*'))));
 handles.sigMS = load(strcat(handles.pathMS,'\',ls(strcat(handles.pathMS,'\Sig*'))));
 handles.thetaMS = load(strcat(handles.pathMS,'\',ls(strcat(handles.pathMS,'\Inc*'))));
+% hold(handles.KuTrack)
 axes(handles.KuTrack)
 imagesc(handles.KuTrack,handles.sigNS);
+set(gca,'Tag','KuTrack')
 %handles.KuTrack.YTickLabel={num2str(min(handles.thetaNS)),num2str(max(handles.thetaNS))};
 colorbar
-imagesc(handles.KaTrack,handles.sigMS);
+% hold(handles.KuTrack,'off')
+% hold(handles.KaTrack)
 axes(handles.KaTrack)
+imagesc(handles.KaTrack,handles.sigMS);
+set(gca,'Tag','KaTrack')
 colorbar
+% hold(handles.KaTrack,'off')
 plotMap(handles,handles.pathNS);
 % set(handles.Map,'toolbar','figure');
 guidata(hObject, handles);
@@ -321,10 +353,17 @@ function FlpBtn_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 handles=flipImage(handles);
-axes(handles.KuTrack)
+hold(handles.KuTrack)
 imagesc(handles.KuTrack,handles.sigNS);
+%handles.KuTrack.YTickLabel={num2str(min(handles.thetaNS)),num2str(max(handles.thetaNS))};
 colorbar
+hold(handles.KuTrack,'off')
+hold(handles.KaTrack)
 imagesc(handles.KaTrack,handles.sigMS);
 axes(handles.KaTrack)
 colorbar
+hold(handles.KaTrack,'off')
 guidata(hObject, handles);
+
+
+

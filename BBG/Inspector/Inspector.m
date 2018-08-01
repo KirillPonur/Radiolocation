@@ -22,7 +22,7 @@ function varargout = Inspector(varargin)
 
 % Edit the above text to modify the response to help Inspector
 
-% Last Modified by GUIDE v2.5 21-Jul-2018 23:16:00
+% Last Modified by GUIDE v2.5 01-Aug-2018 11:17:37
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -170,9 +170,7 @@ varargout{1} = handles.output;
                  handles.thetaMS(i,:)=tempT(sz(1)-i+1,:);
                  handles.sigMS(i,:)=tempS(sz(1)-i+1,:);
              end
-             
-
-             
+            
          function drawRectangle(position,handles)
           position=[floor(position(1)),floor(position(2)),floor(position(3)),floor(position(4))];
           % [xmin ymin width height]
@@ -219,15 +217,44 @@ varargout{1} = handles.output;
     handles.KuHC.Title.String='Vertical-Summed';
     handles.KuVC.YLabel.String='RCS-Db';
     handles.KuHC.YLabel.String='RCS-Db';
-% end
                
-          function F=HypApp(param,xdata)
-%              a=param(1);
-%              c=param(2);
-%              d=param(3);
-               F=param(1)*abs(1./(abs(xdata)+param(2)))+param(3);                
+         function F=HypApp(param,xdata)
+          F=param(1)*abs(1./(abs(xdata)+param(2)))+param(3);                
              
-        
+         function F=WaterApp(param,xdata)
+             F=param(1)^2/param(2)*secd(xdata).^4.*exp(-(tand(xdata)).^2/param(2));
+         
+         function icePredict(handles)
+             sizeTh=size(handles.thetaNS);
+             colFlags=zeros(sizeTh(2),3);
+         for i=1:sizeTh(2)
+             thNS=handles.thetaNS(:,i);
+             for j=1:floor(sizeTh(1)/2)
+              thNS(j)=-handles.thetaNS(j);
+             end
+             
+            [paramNewH]=lsqcurvefit(@HypApp,[5 0 0],thNS,handles.sigNS(:,i));
+            errH=100/(max(handles.sigNS(:,i))-min(handles.sigNS(:,i)))*mean((handles.sigNS(:,i)-HypApp(paramNewH,thNS)).^2);
+            if paramNewH(1)<2000 && paramNewH(1)>15 && paramNewH(3)<100 && errH<10
+                iceFlag=true;
+            else
+                iceFlag=false;
+            end
+            
+            sigNSNorm=10.^(handles.sigNS(:,i)./10); % convert to normalized   
+            [paramNewW]=lsqcurvefit(@WaterApp,[1 1],thNS,sigNSNorm);
+            WaterAppDB=10*log10(WaterApp(paramNewW,thNS));
+            errW=100/(max(handles.sigNS(:,i))-min(handles.sigNS(:,i)))*mean((handles.sigNS(:,i)-WaterAppDB).^2);
+                if abs(paramNewW(1))>0.5 && abs(paramNewW(1))<0.7 && paramNewW(2)>0 && paramNewW(2)<0.1 && errW<15
+                waterFlag=true;
+                else
+                waterFlag=false;
+                end
+            colFlags(i,3)=iceFlag;
+            colFlags(i,2)=waterFlag;
+         end
+         figure(1);
+         imagesc(colFlags);
 
 % --- Executes on button press in pointCutBtn.
 function pointCutBtn_Callback(hObject, eventdata, handles)
@@ -255,12 +282,23 @@ axes(handles.KuTrack)
         plot(handles.KuVC,thN,handles.sigNS(:,floor(x)));
         hold(handles.KuVC);
         scatter(handles.KuVC,thN(floor(y)),handles.sigNS(floor(y),floor(x)),'g','filled')
+         
+        sigNSNorm=10.^(handles.sigNS(:,floor(x))./10); % convert to normalized
+         [paramNewH]=lsqcurvefit(@HypApp,[5 0 0],thN,handles.sigNS(:,floor(x)));
+         [paramNewW]=lsqcurvefit(@WaterApp,[1 1],thN,sigNSNorm);
+         WaterAppDB=10*log10(WaterApp(paramNewW,thN));
+         errW=100/(max(handles.sigNS(:,floor(x)))-min(handles.sigNS(:,floor(x))))*mean((handles.sigNS(:,floor(x))-WaterAppDB).^2);
+         plot(handles.KuVC,thN,HypApp(paramNewH,thN))
+         if errW<1000
+            plot(handles.KuVC,thN,WaterAppDB) 
+         end
+         
         hold(handles.KuVC,'off');
         plot(handles.KuHC,handles.sigNS(floor(y),:))
         hold(handles.KuHC);
         scatter(handles.KuHC,x,handles.sigNS(floor(y),floor(x)),'g','filled')
         hold(handles.KuHC,'off');
-        handles.KuVC.Title.String='Vertical-Cut';
+        handles.KuVC.Title.String=strcat('Vertical-Cut',' R(0)=',num2str(paramNewW(1)),' s=',num2str(paramNewW(2)),' err=',num2str(errW));
         handles.KuHC.Title.String='Horizontal-Cut';
         handles.KuVC.YLabel.String='RCS-Db';
         handles.KuHC.YLabel.String='RCS-Db';
@@ -366,4 +404,9 @@ hold(handles.KaTrack,'off')
 guidata(hObject, handles);
 
 
-
+% --- Executes on button press in calcBtn.
+function calcBtn_Callback(hObject, eventdata, handles)
+% hObject    handle to calcBtn (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+icePredict(handles);

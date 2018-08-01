@@ -224,10 +224,10 @@ varargout{1} = handles.output;
          function F=WaterApp(param,xdata)
              F=param(1)^2/param(2)*secd(xdata).^4.*exp(-(tand(xdata)).^2/param(2));
          
-         function icePredict(handles)
+         function icePredict(handles) % scan the track
              sizeTh=size(handles.thetaNS);
-             colFlags=zeros(sizeTh(2),3);
-         for i=1:sizeTh(2)
+             colFlags=zeros(3,sizeTh(2));
+         for i=1:sizeTh(2) % vertical-scan ||||||->
              thNS=handles.thetaNS(:,i);
              for j=1:floor(sizeTh(1)/2)
               thNS(j)=-handles.thetaNS(j);
@@ -235,26 +235,47 @@ varargout{1} = handles.output;
              
             [paramNewH]=lsqcurvefit(@HypApp,[5 0 0],thNS,handles.sigNS(:,i));
             errH=100/(max(handles.sigNS(:,i))-min(handles.sigNS(:,i)))*mean((handles.sigNS(:,i)-HypApp(paramNewH,thNS)).^2);
-            if paramNewH(1)<2000 && paramNewH(1)>15 && paramNewH(3)<100 && errH<10
+            if paramNewH(1)<2000 && paramNewH(1)>15 && paramNewH(3)<100 && errH<30
                 iceFlag=true;
             else
                 iceFlag=false;
             end
             
-            sigNSNorm=10.^(handles.sigNS(:,i)./10); % convert to normalized   
-            [paramNewW]=lsqcurvefit(@WaterApp,[1 1],thNS,sigNSNorm);
-            WaterAppDB=10*log10(WaterApp(paramNewW,thNS));
-            errW=100/(max(handles.sigNS(:,i))-min(handles.sigNS(:,i)))*mean((handles.sigNS(:,i)-WaterAppDB).^2);
-                if abs(paramNewW(1))>0.5 && abs(paramNewW(1))<0.7 && paramNewW(2)>0 && paramNewW(2)<0.1 && errW<15
-                waterFlag=true;
+            sigNSNorm = 10.^(handles.sigNS(:,i)./10); % convert to normalized   
+            [paramNewW] = lsqcurvefit(@WaterApp,[1 1],thNS,sigNSNorm);
+            WaterAppDB = 10*log10(WaterApp(paramNewW,thNS));
+            errW = 100/(max(handles.sigNS(:,i))-min(handles.sigNS(:,i)))*mean((handles.sigNS(:,i)-WaterAppDB).^2);
+                if abs(paramNewW(1))>0.5 && abs(paramNewW(1))<0.85 && paramNewW(2)>0 && paramNewW(2)<0.1 && errW<15
+                waterFlag = true;
                 else
-                waterFlag=false;
+                waterFlag = false;
                 end
-            colFlags(i,3)=iceFlag;
-            colFlags(i,2)=waterFlag;
+            colFlags(3,i) = iceFlag;
+             colFlags(2,i) = waterFlag;
+            
          end
+         %iceMap=zeros(sizeTh);
+          j=1;        
+         for i=1:sizeTh(2)
+             if colFlags(3,i)~=0
+                 LaNS(:,j)=handles.LaNS(:,i);
+                 LoNS(:,j)=handles.LoNS(:,i);
+                 j=j+1;
+             end
+         end
+         figure(2)
+         imagesc(colFlags);       
+         
          figure(1);
-         imagesc(colFlags);
+         Boundries=[64, 168, 44, 132];
+         axesm('MapProjection','mercator','MapLatLimit',[Boundries(3) Boundries(1)],'MapLonLimit',[Boundries(4) Boundries(2)]);
+         LaNS=LaNS(:);
+         LoNS=LoNS(:);
+         %geoshow(LaNS,LoNS)
+         scatterm(LaNS,LoNS,5,[0 0.6 0.9])
+         geoshow('landareas.shp', 'FaceColor',  [0.5 0.5 0.5]);
+         
+         
 
 % --- Executes on button press in pointCutBtn.
 function pointCutBtn_Callback(hObject, eventdata, handles)
@@ -288,6 +309,7 @@ axes(handles.KuTrack)
          [paramNewW]=lsqcurvefit(@WaterApp,[1 1],thN,sigNSNorm);
          WaterAppDB=10*log10(WaterApp(paramNewW,thN));
          errW=100/(max(handles.sigNS(:,floor(x)))-min(handles.sigNS(:,floor(x))))*mean((handles.sigNS(:,floor(x))-WaterAppDB).^2);
+         errH=100/(max(handles.sigNS(:,floor(x)))-min(handles.sigNS(:,floor(x))))*mean((handles.sigNS(:,floor(x))-HypApp(paramNewH,thN)).^2);
          plot(handles.KuVC,thN,HypApp(paramNewH,thN))
          if errW<1000
             plot(handles.KuVC,thN,WaterAppDB) 
@@ -298,7 +320,9 @@ axes(handles.KuTrack)
         hold(handles.KuHC);
         scatter(handles.KuHC,x,handles.sigNS(floor(y),floor(x)),'g','filled')
         hold(handles.KuHC,'off');
-        handles.KuVC.Title.String=strcat('Vertical-Cut',' R(0)=',num2str(paramNewW(1)),' s=',num2str(paramNewW(2)),' err=',num2str(errW));
+%        handles.KuVC.Title.String=strcat('Vertical-Cut',' R(0)=',num2str(paramNewW(1)),' s=',num2str(paramNewW(2)),' err=',num2str(errW));
+                handles.KuVC.Title.String=strcat('Vertical-Cut',' a=',num2str(paramNewH(1)),' c=',num2str(paramNewH(2)),' err=',num2str(errH));
+
         handles.KuHC.Title.String='Horizontal-Cut';
         handles.KuVC.YLabel.String='RCS-Db';
         handles.KuHC.YLabel.String='RCS-Db';
@@ -364,6 +388,10 @@ handles.DateText.String=handles.path(handles.ind:end);
 handles.pathNS=strcat(handles.path(1:handles.ind-1),'NS',handles.path(handles.ind+2:end));
 handles.pathMS=strcat(handles.path(1:handles.ind-1),'MS',handles.path(handles.ind+2:end));
 handles.sigNS = load(strcat(handles.pathNS,'\',ls(strcat(handles.pathNS,'\Sig*'))));
+handles.LaNS = load(strcat(handles.pathNS,'\',ls(strcat(handles.pathNS,'\La*'))));
+handles.LoNS = load(strcat(handles.pathNS,'\',ls(strcat(handles.pathNS,'\Lo*'))));
+handles.LaMS = load(strcat(handles.pathNS,'\',ls(strcat(handles.pathNS,'\La*'))));
+handles.LoMS = load(strcat(handles.pathNS,'\',ls(strcat(handles.pathNS,'\Lo*'))));
 handles.thetaNS = load(strcat(handles.pathNS,'\',ls(strcat(handles.pathNS,'\Inc*'))));
 handles.sigMS = load(strcat(handles.pathMS,'\',ls(strcat(handles.pathMS,'\Sig*'))));
 handles.thetaMS = load(strcat(handles.pathMS,'\',ls(strcat(handles.pathMS,'\Inc*'))));

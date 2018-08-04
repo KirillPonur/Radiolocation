@@ -320,8 +320,9 @@ axes(handles.KuTrack)
         hold(handles.KuHC);
         scatter(handles.KuHC,x,handles.sigNS(floor(y),floor(x)),'g','filled')
         hold(handles.KuHC,'off');
-%        handles.KuVC.Title.String=strcat('Vertical-Cut',' R(0)=',num2str(paramNewW(1)),' s=',num2str(paramNewW(2)),' err=',num2str(errW));
-                handles.KuVC.Title.String=strcat('Vertical-Cut',' a=',num2str(paramNewH(1)),' c=',num2str(paramNewH(2)),' err=',num2str(errH));
+       handles.KuVC.Title.String=strcat('Vertical-Cut',' R(0)=',num2str(paramNewW(1)),' s=',num2str(paramNewW(2)),' err=',num2str(errW));
+%                 handles.KuVC.Title.String=strcat('Vertical-Cut',' a=',num2str(paramNewH(1)),' b=',num2str(paramNewH(2))...
+%                     ,' c=',num2str(paramNewH(3)),' err=',num2str(errH));
 
         handles.KuHC.Title.String='Horizontal-Cut';
         handles.KuVC.YLabel.String='RCS-Db';

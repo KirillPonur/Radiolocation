@@ -1,0 +1,20 @@
+clear all
+thNS=load('IncKu.txt');
+sizeT=size(thNS);
+SigNS=zeros(sizeT);
+Nbreaks=floor(10*rand(1));
+rndPos=rand(1,Nbreaks);
+breakPos=sort(floor(rndPos.*sizeT(2)));
+breakPos=[1,breakPos,sizeT(2)];
+ for j=1:Nbreaks+1
+     for i=breakPos(j):breakPos(j+1)
+         if rand>=0.5
+            SigNS(:,i)=;%water
+         else
+             
+         end
+     end
+ end
+%F=param(1)*abs(1./(abs(xdata)+param(2)))+param(3); %ice
+
+%F=param(1)^2/param(2)*secd(xdata).^4.*exp(-(tand(xdata)).^2/param(2)); %water

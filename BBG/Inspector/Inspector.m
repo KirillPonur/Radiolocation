@@ -439,3 +439,31 @@ function calcBtn_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 icePredict(handles);
+% --- Executes on button press in SaveBtn.
+function SaveBtn_Callback(hObject, eventdata, handles)
+mouse=1;
+% hObject    handle to SaveBtn (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+while mouse<3
+[mouse]=ginput(1);
+ax=gca;
+name=strcat(ax.Tag);
+
+hh=figure;
+copyobj(ax,hh);
+ax=gca;
+ax.Position=[0.13 0.11 0.775 0.815];
+
+
+mkdir images
+path=strcat(cd,'\images\',name);
+
+if size(name)==(0)
+    saveas(hh,strcat(cd,'\images\','NoTag'),'jpg');
+else
+    saveas(hh,path,'jpg');
+end   
+close(gcf);
+end
+

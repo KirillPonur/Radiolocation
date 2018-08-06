@@ -83,7 +83,7 @@ varargout{1} = handles.output;
 
 
 %%%%%%%%%%%  Mfuncs  %%%%%%%%%%%%%%
-        function plotMap(handles,file)
+         function plotMap(handles,file)
             axes(handles.Map)
             cla
             MainFile=load(strcat(file,'\',ls(strcat(file,'\area*')))); %load areaKu file in
@@ -116,13 +116,6 @@ varargout{1} = handles.output;
             geoshow('landareas.shp', 'FaceColor',  [0.5 0.5 0.5]); %show the map
             scatterm(LaNew,LoNew,5,cmap,'filled')
             
-            %         colorbar('AxisLocation','in','FontSize',9,...
-            %             'Ticks',[minz,maxz])%minz+(maxz-minz)/5,minz+2*(maxz-minz)/5,...
-            %minz+3*(maxz-minz)/5,minz+4*(maxz-minz)/5,minz+5*(maxz-minz)/5])%,...
-            %             'TickLabels',{num2str(minz),num2str(minz+(maxz-minz)/5),...
-            %             num2str(minz+2*(maxz-minz)/5),num2str(minz+3*(maxz-minz)/5),...
-            %             num2str(minz+4*(maxz-minz)/5),num2str(minz+5*(maxz-minz)/5)});
-            %
          function f = wcol1(xmin,xmax, x)
                 
                 d = xmax - xmin;
@@ -170,7 +163,13 @@ varargout{1} = handles.output;
                  handles.thetaMS(i,:)=tempT(sz(1)-i+1,:);
                  handles.sigMS(i,:)=tempS(sz(1)-i+1,:);
              end
-            
+             
+         function updateTags(handles)
+             set(handles.KuVC,'Tag','KuVC');
+             set(handles.KuHC,'Tag','KuHC');
+             set(handles.KaVC,'Tag','KaVC');
+             set(handles.KaHC,'Tag','KaHC');
+                         
          function drawRectangle(position,handles)
           position=[floor(position(1)),floor(position(2)),floor(position(3)),floor(position(4))];
           % [xmin ymin width height]
@@ -226,8 +225,10 @@ varargout{1} = handles.output;
          
          function icePredict(handles) % scan the track
              sizeTh=size(handles.thetaNS);
-             colFlags=zeros(3,sizeTh(2));
-         for i=1:sizeTh(2) % vertical-scan ||||||->
+             colFlags1=zeros(1,sizeTh(2));
+             colFlags2=zeros(1,sizeTh(2));
+             colFlags3=zeros(1,sizeTh(2));
+         parfor i=1:sizeTh(2) % vertical-scan ||||||->
              thNS=handles.thetaNS(:,i);
              for j=1:floor(sizeTh(1)/2)
               thNS(j)=-handles.thetaNS(j);
@@ -250,10 +251,11 @@ varargout{1} = handles.output;
                 else
                 waterFlag = false;
                 end
-            colFlags(3,i) = iceFlag;
-             colFlags(2,i) = waterFlag;
+            colFlags3(i) = iceFlag;
+            colFlags2(i) = waterFlag;
             
          end
+         colFlags=[colFlags1; colFlags2; colFlags3];
          %iceMap=zeros(sizeTh);
           j=1;        
          for i=1:sizeTh(2)
@@ -411,6 +413,7 @@ colorbar
 % hold(handles.KaTrack,'off')
 plotMap(handles,handles.pathNS);
 % set(handles.Map,'toolbar','figure');
+updateTags(handles)
 guidata(hObject, handles);
 
 
@@ -439,31 +442,31 @@ function calcBtn_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 icePredict(handles);
+
 % --- Executes on button press in SaveBtn.
 function SaveBtn_Callback(hObject, eventdata, handles)
 mouse=1;
 % hObject    handle to SaveBtn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+updateTags(handles)
 while mouse<3
-[mouse]=ginput(1);
-ax=gca;
-name=strcat(ax.Tag);
-
-hh=figure;
-copyobj(ax,hh);
-ax=gca;
-ax.Position=[0.13 0.11 0.775 0.815];
-
-
-mkdir images
-path=strcat(cd,'\images\',name);
-
-if size(name)==(0)
-    saveas(hh,strcat(cd,'\images\','NoTag'),'jpg');
-else
-    saveas(hh,path,'jpg');
-end   
-close(gcf);
-end
+    
+    [mouse]=ginput(1);
+    ax=gca;
+    name=ax.Tag;
+    hh=figure;
+    copyobj(ax,hh);
+    ax=gca;
+    ax.Position=[0.13 0.11 0.775 0.815];
+    mkdir images
+    path=strcat(cd,'\images\',name);
+    if size(name)==(0)
+        saveas(hh,strcat(cd,'\images\','NoTag'),'jpg');
+    else
+        saveas(hh,path,'jpg');
+    end   
+    close(gcf);
+ 
+ end
 

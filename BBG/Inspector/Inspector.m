@@ -292,6 +292,7 @@ handles.KuHC.YLabel.FontName='Helvetica';
 handles.KuVC.Title.FontWeight='bold';
 handles.KuVC.YLabel.FontName='Helvetica';
 axes(handles.KuTrack)
+
  while mouse<3 %while RButton (mouse=3) is not pressed
     [x,y,mouse]=ginput(1);
     ax=gca;
@@ -321,6 +322,16 @@ axes(handles.KuTrack)
         plot(handles.KuHC,handles.sigNS(floor(y),:))
         hold(handles.KuHC);
         scatter(handles.KuHC,x,handles.sigNS(floor(y),floor(x)),'g','filled')
+        
+        %convolute with gauss's 1st derivative
+        sigma=100;
+        kappa=sigma/2;
+        x=-floor(tSizeNS(2)/10):floor(tSizeNS(2)/10);
+        G=-x./kappa^2.*exp(-x.^2/(2*sigma^2));
+        convd=conv(handles.sigNS(floor(y),:),G,'same');
+        convd=convd/max(convd)*max(handles.sigNS(floor(y),:));
+        plot(handles.KuHC,convd)
+        
         hold(handles.KuHC,'off');
        handles.KuVC.Title.String=strcat('Vertical-Cut',' R(0)=',num2str(paramNewW(1)),' s=',num2str(paramNewW(2)),' err=',num2str(errW));
 %                 handles.KuVC.Title.String=strcat('Vertical-Cut',' a=',num2str(paramNewH(1)),' b=',num2str(paramNewH(2))...

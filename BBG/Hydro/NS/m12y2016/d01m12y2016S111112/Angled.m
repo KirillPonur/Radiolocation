@@ -12,6 +12,7 @@ breakPos=[1,breakPos,sizeT(2)];
 Ai=153.12; Bi=4.25; Ci=-13.67; %ice param
 Aw=0.72; Bw=0.03; %water param
 f=2; %shift factor
+WN=randn(sizeT);
 for j=1:Nbreaks+1    
     if rand>=0.5
         for i=breakPos(j):breakPos(j+1)
@@ -31,7 +32,7 @@ for k=1:sizeT(1)
     a=a';
     SigNS(k,:)=a;
 end
-
+SigNS=SigNS+WN+0.1*SigNS.*perlin2D(sizeT(1),sizeT(2));
 fidK = fopen('areaKu.txt','wt');
 
 for ii=1:sizeT(1)
@@ -45,6 +46,7 @@ end
 fidSig = fopen('SigKu.txt','wt');
 dlmwrite('SigKu.txt',SigNS,'delimiter','\t');
 imagesc(SigNS)
+colorbar
 print('angled','-dpng')
 
 %F=param(1)*abs(1./(abs(xdata)+param(2)))+param(3); %ice

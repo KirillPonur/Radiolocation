@@ -228,37 +228,48 @@ varargout{1} = handles.output;
              colFlags1=zeros(1,sizeTh(2));
              colFlags2=zeros(1,sizeTh(2));
              colFlags3=zeros(1,sizeTh(2));
-%          parfor i=1:sizeTh(2) % vertical-scan ||||||->
-%              thNS=handles.thetaNS(:,i);
-%              for j=1:floor(sizeTh(1)/2)
-%               thNS(j)=-handles.thetaNS(j);
-%              end
-%              
-%             [paramNewH]=lsqcurvefit(@HypApp,[5 0 0],thNS,handles.sigNS(:,i));
-%             errH=100/(max(handles.sigNS(:,i))-min(handles.sigNS(:,i)))*mean((handles.sigNS(:,i)-HypApp(paramNewH,thNS)).^2);
-%             if paramNewH(1)<2000 && paramNewH(1)>15 && paramNewH(3)<100 && errH<30
-%                 iceFlag=true;
-%             else
-%                 iceFlag=false;
-%             end
-%             
-%             sigNSNorm = 10.^(handles.sigNS(:,i)./10); % convert to normalized   
-%             [paramNewW] = lsqcurvefit(@WaterApp,[1 1],thNS,sigNSNorm);
-%             WaterAppDB = 10*log10(WaterApp(paramNewW,thNS));
-%             errW = 100/(max(handles.sigNS(:,i))-min(handles.sigNS(:,i)))*mean((handles.sigNS(:,i)-WaterAppDB).^2);
-%                 if abs(paramNewW(1))>0.5 && abs(paramNewW(1))<0.85 && paramNewW(2)>0 && paramNewW(2)<0.1 && errW<15
-%                 waterFlag = true;
-%                 else
-%                 waterFlag = false;
-%                 end
-%             colFlags3(i) = iceFlag;
-%             colFlags2(i) = waterFlag;
-%             
-%          end
+             newsigNS=handles.sigNS;
+         parfor i=1:sizeTh(2) % vertical-scan ||||||->
+             thNS=handles.thetaNS(:,i);
+             for j=1:floor(sizeTh(1)/2)
+              thNS(j)=-handles.thetaNS(j);
+             end
+             
+            [paramNewH]=lsqcurvefit(@HypApp,[5 0 0],thNS,handles.sigNS(:,i));
+            errH=100/(max(handles.sigNS(:,i))-min(handles.sigNS(:,i)))*mean((handles.sigNS(:,i)-HypApp(paramNewH,thNS)).^2);
+            if paramNewH(1)<2000 && paramNewH(1)>15 && paramNewH(3)<100 && errH<30
+                iceFlag=true;
+            else
+                iceFlag=false;
+            end
+            
+            sigNSNorm = 10.^(handles.sigNS(:,i)./10); % convert to normalized   
+            [paramNewW] = lsqcurvefit(@WaterApp,[1 1],thNS,sigNSNorm);
+            WaterAppDB = 10*log10(WaterApp(paramNewW,thNS));
+            errW = 100/(max(handles.sigNS(:,i))-min(handles.sigNS(:,i)))*mean((handles.sigNS(:,i)-WaterAppDB).^2);
+                if abs(paramNewW(1))>0.5 && abs(paramNewW(1))<0.85 && paramNewW(2)>0 && paramNewW(2)<0.1 && errW<15
+                waterFlag = true;
+                else
+                waterFlag = false;
+                end
+            colFlags3(i) = iceFlag;
+            colFlags2(i) = waterFlag;
+            
+            if  waterFlag
+                waterDiff = max(WaterAppDB)-WaterAppDB;
+                newsigNS(:,i)=newsigNS(:,i)+waterDiff;
+            end
+            if iceFlag
+                iceDiff = max(HypApp(paramNewH,thNS))-HypApp(paramNewH,thNS);
+                newsigNS(:,i)=newsigNS(:,i)+iceDiff;
+            end
+         end
+         
+         
          %edges
          params=zeros(sizeTh);
          for i=1:sizeTh(1)
-            [maxs,Imaxs]=findpeaks(findEdgesH(handles,i));
+            [maxs,Imaxs]=findpeaks(findEdgesH(handles.sigNS,i));
             maxs=maxs.*100/max(maxs);
             for j=1:length(maxs)
                 if maxs(j)>20
@@ -267,18 +278,42 @@ varargout{1} = handles.output;
             end
          end
          
+         %exp flipped
+%          params1=zeros(sizeTh);
+%          fsigNS=fliplr(handles.sigNS);
+%          for i=1:sizeTh(1)
+%             [maxs,Imaxs]=findpeaks(findEdgesH(fsigNS,i));
+%             maxs=maxs.*100/max(maxs);
+%             for j=1:length(maxs)
+%                 if maxs(j)>15
+%                     params1(i,Imaxs(j))=1;
+%                 end
+%             end
+%          end
+         %exp
+         
+         
          %for vertical cuts
-         for i=1:sizeTh(2)
-            [maxs,Imaxs]=findpeaks(findEdgesV(handles,i));
-            maxs=maxs.*100/max(maxs);
-            for j=1:length(maxs)
-                if maxs(j)>30
-                    params(Imaxs(j),i)=1;
-                end
-            end
-         end
+%          for i=1:sizeTh(2)
+%             [maxs,Imaxs]=findpeaks(findEdgesV(handles,sigNS,i));
+%             maxs=maxs.*100/max(maxs);
+%             for j=1:length(maxs)
+%                 if maxs(j)>30
+%                     params(Imaxs(j),i)=1;
+%                 end
+%             end
+%          end
          
          colFlags=[colFlags1; colFlags2; colFlags3];
+         nMap=zeros(sizeTh);
+         for i=1:sizeTh(2)
+            if colFlags2(i)==1
+                nMap(:,i)=1; %water
+            end
+            if colFlags3(i)==1
+                nMap(:,i)=2; %ice
+            end
+         end
          j=1;        
          for i=1:sizeTh(2)
              if colFlags(3,i)~=0
@@ -287,9 +322,15 @@ varargout{1} = handles.output;
                  j=j+1;
              end
          end
-         figure(2)
-         imagesc(colFlags);       
+         figure
          imagesc(params)
+         figure
+         imagesc(nMap)
+         figure
+         imagesc(newsigNS)
+%          imagesc(fliplr(params1)+params)
+%          imagesc(colFlags);       
+         
 %          figure(1);
 %          Boundries=[64, 168, 44, 132];
 %          axesm('MapProjection','mercator','MapLatLimit',[Boundries(3) Boundries(1)],'MapLonLimit',[Boundries(4) Boundries(2)]);
@@ -299,32 +340,32 @@ varargout{1} = handles.output;
 %          scatterm(LaNS,LoNS,5,[0 0.6 0.9])
 %          geoshow('landareas.shp', 'FaceColor',  [0.5 0.5 0.5]);
          
-         function [edgeness]=findEdgesV(handles,rowNumber)
-            tSizeNS=size(handles.thetaNS);
+         function [edgeness]=findEdgesV(sigNS,rowNumber)
+            tSizeNS=size(sigNS);
             y=rowNumber;
             sigma=6;
             x=-100:100;
             G=-x.*exp(-x.^2/(2*sigma^2));
             Gh=@(x,s) -x.*exp(-x.^2/(2*s^2));
-            convd=conv(handles.sigNS(:,floor(y)),G,'same');
+            convd=conv(sigNS(:,floor(y)),G,'same');
            % convd=convd/max(convd)*max(handles.sigNS(floor(y),:));
             Gdx = diff([G 0]);
-            datadx = diff([handles.sigNS(:,floor(y));mean(handles.sigNS(:,floor(y)))]);
+            datadx = diff([sigNS(:,floor(y));mean(sigNS(:,floor(y)))]);
             SNR=abs(convd)./sqrt(integral(@(x)(Gh(x,sigma)).^2,0,tSizeNS(2)));
             Loc=abs(conv(datadx,Gdx,'same'))./sqrt(integral(@(x)diff(([Gh(x,sigma) 0])).^2,0,1));
             edgeness=SNR.*Loc;   
             
-            function [edgeness]=findEdgesH(handles,lineNumber)
-            tSizeNS=size(handles.thetaNS);
+         function [edgeness]=findEdgesH(sigNS,lineNumber)
+            tSizeNS=size(sigNS);
             y=lineNumber;
-            sigma=15;
-            x=-100:100;
+            sigma=6;
+            x=-50:50;
             G=-x.*exp(-x.^2/(2*sigma^2));
             Gh=@(x,s) -x.*exp(-x.^2/(2*s^2));
-            convd=conv(handles.sigNS(floor(y),:),G,'same');
+            convd=conv(sigNS(floor(y),:),G,'same');
            % convd=convd/max(convd)*max(handles.sigNS(floor(y),:));
             Gdx = diff([G 0]);
-            datadx = diff([handles.sigNS(floor(y),:) mean(handles.sigNS(floor(y),:))]);
+            datadx = diff([sigNS(floor(y),:) mean(sigNS(floor(y),:))]);
             SNR=abs(convd)./sqrt(integral(@(x)(Gh(x,sigma)).^2,0,tSizeNS(2)));
             Loc=abs(conv(datadx,Gdx,'same'))./sqrt(integral(@(x)diff(([Gh(x,sigma) 0])).^2,0,tSizeNS(2)));
             edgeness=SNR.*Loc;   
@@ -377,8 +418,8 @@ axes(handles.KuTrack)
         scatter(handles.KuHC,x,handles.sigNS(floor(y),floor(x)),'g','filled')
         
         %convolute with gauss's 1st derivative
-        param=findEdgesH(handles,y);
-        param2=findEdgesV(handles,x);
+        param=findEdgesH(handles.sigNS,y);
+        param2=findEdgesV(handles.sigNS,x);
 %         plot(handles.KuHC,convd/max(convd)*max(handles.sigNS(floor(y),:)))
         plot(handles.KuHC,param/max(param)*max(handles.sigNS(floor(y),:)))
         hold(handles.KuHC,'off');

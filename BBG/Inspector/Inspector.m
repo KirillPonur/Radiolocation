@@ -229,6 +229,10 @@ varargout{1} = handles.output;
              colFlags2=zeros(1,sizeTh(2));
              colFlags3=zeros(1,sizeTh(2));
              newsigNS=handles.sigNS;
+             iceAverage=zeros(sizeTh(1),1);
+             iceAvAm=0;
+             waterAverage=zeros(sizeTh(1),1);
+             waterAvAm=0;
          parfor i=1:sizeTh(2) % vertical-scan ||||||->
              thNS=handles.thetaNS(:,i);
              for j=1:floor(sizeTh(1)/2)
@@ -239,6 +243,8 @@ varargout{1} = handles.output;
             errH=100/(max(handles.sigNS(:,i))-min(handles.sigNS(:,i)))*mean((handles.sigNS(:,i)-HypApp(paramNewH,thNS)).^2);
             if paramNewH(1)<2000 && paramNewH(1)>15 && paramNewH(3)<100 && errH<30
                 iceFlag=true;
+                iceAverage=iceAverage+handles.sigNS(:,i);
+                iceAvAm=iceAvAm+1;
             else
                 iceFlag=false;
             end
@@ -249,23 +255,29 @@ varargout{1} = handles.output;
             errW = 100/(max(handles.sigNS(:,i))-min(handles.sigNS(:,i)))*mean((handles.sigNS(:,i)-WaterAppDB).^2);
                 if abs(paramNewW(1))>0.5 && abs(paramNewW(1))<0.85 && paramNewW(2)>0 && paramNewW(2)<0.1 && errW<15
                 waterFlag = true;
+                waterAverage=waterAverage+handles.sigNS(:,i);
+                waterAvAm=waterAvAm+1;
                 else
                 waterFlag = false;
                 end
             colFlags3(i) = iceFlag;
             colFlags2(i) = waterFlag;
             
-            if  waterFlag
-                waterDiff = max(WaterAppDB)-WaterAppDB;
-                newsigNS(:,i)=newsigNS(:,i)+waterDiff;
-            end
-            if iceFlag
-                iceDiff = max(HypApp(paramNewH,thNS))-HypApp(paramNewH,thNS);
-                newsigNS(:,i)=newsigNS(:,i)+iceDiff;
-            end
+            %straighten
+%             if  waterFlag
+%                 waterDiff = max(WaterAppDB)-WaterAppDB;
+%                  newsigNS(:,i)=newsigNS(:,i)+waterDiff;
+%             end
+%             if iceFlag
+%                 iceDiff = max(HypApp(paramNewH,thNS))-HypApp(paramNewH,thNS);
+%                 newsigNS(:,i)=newsigNS(:,i)+iceDiff;
+%             end
          end
-         
-         
+%          iceAverage=iceAverage/iceAvAm;
+%          waterAverage=waterAverage/waterAvAm;
+%          [Lmin,LminIndex]=min(abs(iceAverage(1:floor(sizeTh(1)/2))-waterAverage(1:floor(sizeTh(1)/2))));
+%          [Rmin,RminIndex]=min(abs(iceAverage(floor(sizeTh(1)/2):length(iceAverage))-waterAverage(floor(sizeTh(1)/2):length(waterAverage))));
+%          RminIndex=RminIndex+floor(sizeTh(1))/2-1;      
          %edges
          params=zeros(sizeTh);
          for i=1:sizeTh(1)
@@ -306,7 +318,27 @@ varargout{1} = handles.output;
          
          colFlags=[colFlags1; colFlags2; colFlags3];
          nMap=zeros(sizeTh);
+%          paramsIndex=zeros(sizeTh);
+         m=1;
          for i=1:sizeTh(2)
+%             if ~colFlags2(i) || ~colFlags3(i)
+%                 for j=1:sizeTh(1)
+%                     if handles.sigNS(j,i)>iceAverage(j)
+%                         if j < LminIndex || j > RminIndex
+%                             nMap(j,i)=1;
+%                         else
+%                             nMap(j,i)=2;
+%                         end
+%                     end
+%                     if handles.sigNS(j,i)<iceAverage(j)
+%                         if j > LminIndex && j < RminIndex
+%                             nMap(j,i)=1;
+%                         else
+%                             nMap(j,i)=2;
+%                         end
+%                     end
+%                 end
+%             end
             if colFlags2(i)==1
                 nMap(:,i)=1; %water
             end
@@ -321,22 +353,91 @@ varargout{1} = handles.output;
                  LoNS(:,j)=handles.LoNS(:,i);
                  j=j+1;
              end
+            
          end
-         figure
-         imagesc(params)
-         figure
-         imagesc(nMap)
-         figure
-         imagesc(newsigNS)
+         oldnMap=nMap;
+         %filling da flags
+         
+         k=1;
+         for i = 1:sizeTh(1)
+             BorderIndex=zeros(1,sizeTh(2));
+           for j=1:sizeTh(2)
+            if params(i,j) == 1
+                BorderIndex(k)=j;
+                k=k+1;
+            end
+           end
+           BorderIndex=BorderIndex(1:k-1);
+           BorderIndex=[1,BorderIndex,sizeTh(2)];
+           k=1; iAm=0; zAm=0; wAm=0;
+           for k=1:length(BorderIndex)-1
+               for m=BorderIndex(k):BorderIndex(k+1)
+                   if nMap(i,m) == 0
+                     zAm=zAm+1;
+                   end
+                   if nMap(i,m) == 1
+                     wAm=wAm+1;      
+                   end
+                   if nMap(i,m) == 2
+                     iAm=iAm+1;          
+                   end
+               end
+               Ams=[zAm,wAm,iAm];
+               [maxAms,maxAmsIndex]=max(Ams);
+               nMap(i,BorderIndex(k):BorderIndex(k+1))=maxAmsIndex-1;
+               wAm=0;iAm=0;zAm=0;
+           end
+          
+           k=1;
+         end
+  
+
+
+         nMap=nMap+15*params; %paint borders with flags
+         for i=1:sizeTh(2)
+             for j=1:sizeTh(1)
+                if nMap(j,i)>=14
+                    nMap(j,i)=3;
+                end
+             end
+            
+         end
+         cmap=[0 0 0.5 ; 0 1 1 ; 1 0 0];
+         %strcat(handles.pathNS,'\',ls(strcat(handles.pathNS,'\image*')))
+         [A,R] = geotiffread(strcat(handles.pathNS,'\',ls(strcat(handles.pathNS,'\image.tif'))));
+         figure('Position',[100 100 1600 900],'Color','white')
+         geoshow(A,R)
+         hold on
+         h=geoshow(handles.LaNS,handles.LoNS,nMap,cmap);
+         set(h,'FaceAlpha',0.5)
+         xlim(R.LongitudeLimits)
+         ylim(R.LatitudeLimits)
+         imPath=strcat(handles.pathNS,'\imageIce');
+         export_fig(imPath,'-png','-q100')
+         
+         
+         
+%          figure
+%          imagesc(params) %show borders
+%          figure
+%          imagesc(nMap)   %show icemap with borders
+%         figure
+%         imagesc(oldnMap)
+%          figure
+%          plot(iceAverage)
+%          hold on
+%          plot(waterAverage)
+%          hold off
 %          imagesc(fliplr(params1)+params)
 %          imagesc(colFlags);       
          
-%          figure(1);
+        %show  basic ice map
+%          figure
 %          Boundries=[64, 168, 44, 132];
 %          axesm('MapProjection','mercator','MapLatLimit',[Boundries(3) Boundries(1)],'MapLonLimit',[Boundries(4) Boundries(2)]);
 %          LaNS=LaNS(:);
 %          LoNS=LoNS(:);
-%          %geoshow(LaNS,LoNS)
+%          geoshow(LaNS,LoNS)
 %          scatterm(LaNS,LoNS,5,[0 0.6 0.9])
 %          geoshow('landareas.shp', 'FaceColor',  [0.5 0.5 0.5]);
          
@@ -353,7 +454,8 @@ varargout{1} = handles.output;
             datadx = diff([sigNS(:,floor(y));mean(sigNS(:,floor(y)))]);
             SNR=abs(convd)./sqrt(integral(@(x)(Gh(x,sigma)).^2,0,tSizeNS(2)));
             Loc=abs(conv(datadx,Gdx,'same'))./sqrt(integral(@(x)diff(([Gh(x,sigma) 0])).^2,0,1));
-            edgeness=SNR.*Loc;   
+            edgeness=SNR.*Loc;  
+%             edgeness=SNR; 
             
          function [edgeness]=findEdgesH(sigNS,lineNumber)
             tSizeNS=size(sigNS);
@@ -368,7 +470,8 @@ varargout{1} = handles.output;
             datadx = diff([sigNS(floor(y),:) mean(sigNS(floor(y),:))]);
             SNR=abs(convd)./sqrt(integral(@(x)(Gh(x,sigma)).^2,0,tSizeNS(2)));
             Loc=abs(conv(datadx,Gdx,'same'))./sqrt(integral(@(x)diff(([Gh(x,sigma) 0])).^2,0,tSizeNS(2)));
-            edgeness=SNR.*Loc;   
+             %edgeness=SNR.*Loc;
+              edgeness=SNR;
          
 
 % --- Executes on button press in pointCutBtn.

@@ -249,19 +249,20 @@ varargout{1} = handles.output;
                 iceFlag=false;
             end
             
-            sigNSNorm = 10.^(handles.sigNS(:,i)./10); % convert to normalized   
-            [paramNewW] = lsqcurvefit(@WaterApp,[1 1],thNS,sigNSNorm);
-            WaterAppDB = 10*log10(WaterApp(paramNewW,thNS));
-            errW = 100/(max(handles.sigNS(:,i))-min(handles.sigNS(:,i)))*mean((handles.sigNS(:,i)-WaterAppDB).^2);
-                if abs(paramNewW(1))>0.5 && abs(paramNewW(1))<0.85 && paramNewW(2)>0 && paramNewW(2)<0.1 && errW<15
-                waterFlag = true;
-                waterAverage=waterAverage+handles.sigNS(:,i);
-                waterAvAm=waterAvAm+1;
-                else
-                waterFlag = false;
-                end
+%             sigNSNorm = 10.^(handles.sigNS(:,i)./10); % convert to normalized   
+%             [paramNewW] = lsqcurvefit(@WaterApp,[1 1],thNS,sigNSNorm);
+%             WaterAppDB = 10*log10(WaterApp(paramNewW,thNS));
+%             errW = 100/(max(handles.sigNS(:,i))-min(handles.sigNS(:,i)))*mean((handles.sigNS(:,i)-WaterAppDB).^2);
+%                 if abs(paramNewW(1))>0.5 && abs(paramNewW(1))<0.85 && paramNewW(2)>0 && paramNewW(2)<0.1 && errW<15
+%                 waterFlag = true;
+%                 waterAverage=waterAverage+handles.sigNS(:,i);
+%                 waterAvAm=waterAvAm+1;
+%                 else
+%                 waterFlag = false;
+%                 end
             colFlags3(i) = iceFlag;
-            colFlags2(i) = waterFlag;
+%             colFlags2(i) = waterFlag;
+            colFlags2(i) = 0;
             
             %straighten
 %             if  waterFlag
@@ -412,7 +413,8 @@ varargout{1} = handles.output;
          set(h,'FaceAlpha',0.5)
          xlim(R.LongitudeLimits)
          ylim(R.LatitudeLimits)
-         imPath=strcat(handles.pathNS,'\imageIce');
+         iceFileName=handles.pathNS(length(handles.pathNS)-18:end);
+         imPath=strcat(handles.pathNS(1:length(handles.pathNS)-18),'images\',iceFileName);
          export_fig(imPath,'-png','-q100')
          
          

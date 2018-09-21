@@ -35,13 +35,13 @@ end
  %Counter of days done
  numberOfDays=0;
  fdone=0;
- k=1;
-    hydroPic=ls('Hydrometer_Okhotsk/2016-2018/2016');
-    Amount=size(hydroPic);
-        for i=4:Amount(1)
-            wantedMonthDay{k}=hydroPic(i,3:6); %dates of pictures we have for this year
-            k=k+1;
-        end
+%  k=1;
+%     hydroPic=ls('Hydrometer_Okhotsk/2016-2018/2016');
+%     Amount=size(hydroPic);
+%         for i=4:Amount(1)
+%             wantedMonthDay{k}=hydroPic(i,3:6); %dates of pictures we have for this year
+%             k=k+1;
+%         end
         
  i=0;k=0;
     
@@ -54,14 +54,14 @@ while ~feof(fid)
     orbit=L(80:86);
     whatK=L(sh+18:sh+19);
     %orbit = strcat('S',L(sh+6:sh+9),'00');
-    NeededDate = any(strcmp(wantedMonthDay,strcat(month,day)));
+%     NeededDate = any(strcmp(wantedMonthDay,strcat(month,day)));
     %Counter of days done
         if ~strcmp(p_day,day)
             numberOfDays=numberOfDays+1;
            displayText=strcat('Days done: ',num2str(numberOfDays));
            disp(displayText) 
         end
-        if NeededDate  %only sort if matches date
+%         if NeededDate  %only sort if matches date
             fn = sscanf(L,'%s');
             fileinfo = hdf5info(fn);
             % Groups(1) - HS, Ka-band; Groups(3) - NS, Ku-band
@@ -96,7 +96,7 @@ while ~feof(fid)
             disp('Finished counting distances')
             k1=sortAll(LaKu,LoKu,LaBottom,LoLeft,LaTop,LoRight,d21,d22,j11,j22,filePath,whatK,Lsw,kmPerSquare,sizeKu,IncAngleKu,sigmaKu,preciprateKu,secofdayKu);
         
-        end
+%         end
 end
 load handel.mat;
 sound(y,Fs);
